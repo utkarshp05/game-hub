@@ -22,6 +22,17 @@ class MemoryFlip {
   buildBoard() {
     const board = document.createElement('div');
     board.className = 'memory-board';
+    board.style.cssText = `
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      border: 2px solid #00d4ff;
+      max-width: 300px;
+      margin: auto;
+    `;
 
     this.cardData.forEach((symbol, index) => {
       const card = document.createElement('div');
@@ -29,8 +40,28 @@ class MemoryFlip {
       card.dataset.index = index;
       card.dataset.symbol = symbol;
       card.textContent = '?';
+      card.style.cssText = `
+        background: linear-gradient(135deg, #1a1f3a, #0f3460);
+        border: 2px solid #00d4ff;
+        border-radius: 8px;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: 700;
+        aspect-ratio: 1;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        user-select: none;
+        color: white;
+      `;
 
       card.addEventListener('click', () => this.flipCard(card));
+      card.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        this.flipCard(card);
+      });
 
       board.appendChild(card);
       this.cards.push(card);
@@ -48,7 +79,12 @@ class MemoryFlip {
     // Flip the card
     card.classList.add('flipped');
     card.textContent = card.dataset.symbol;
+    card.style.background = '#00d4ff';
+    card.style.color = '#000';
+    card.style.borderColor = '#00ff88';
     this.flipped.push(card);
+
+    audioManager.click();
 
     // Check for match
     if (this.flipped.length === 2) {
@@ -65,8 +101,15 @@ class MemoryFlip {
       setTimeout(() => {
         card1.classList.add('matched');
         card2.classList.add('matched');
+        card1.style.opacity = '0.5';
+        card2.style.opacity = '0.5';
+        card1.style.cursor = 'default';
+        card2.style.cursor = 'default';
         this.matched += 2;
         this.flipped = [];
+
+        audioManager.win();
+        Effects.createConfetti();
 
         // Check win condition
         if (this.matched === this.cards.length) {
@@ -80,7 +123,15 @@ class MemoryFlip {
         card2.classList.remove('flipped');
         card1.textContent = '?';
         card2.textContent = '?';
+        card1.style.background = 'linear-gradient(135deg, #1a1f3a, #0f3460)';
+        card2.style.background = 'linear-gradient(135deg, #1a1f3a, #0f3460)';
+        card1.style.color = 'white';
+        card2.style.color = 'white';
+        card1.style.borderColor = '#00d4ff';
+        card2.style.borderColor = '#00d4ff';
         this.flipped = [];
+
+        audioManager.lose();
       }, 800);
     }
 
@@ -96,10 +147,7 @@ class MemoryFlip {
 
   win() {
     const finalScore = Math.max(0, this.matched - this.moves);
-    setTimeout(() => {
-      alert(`🎉 You Won!\nMoves: ${this.moves}\nScore: ${finalScore}`);
-      this.controller.backToMenu();
-    }, 300);
+    setTimeout(() => this.controller.showGameOver(finalScore, `Completed in ${this.moves} moves! 🎉`), 400);
   }
 
   stop() {

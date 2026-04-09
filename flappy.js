@@ -2,183 +2,121 @@ class FlappyGame {
   constructor(container, controller) {
     this.container = container;
     this.controller = controller;
-
-    // Game settings
-    this.canvasWidth = 300;
-    this.canvasHeight = 500;
-    this.gravity = 0.5;
-    this.flapPower = -12;
-    this.pipeSpeed = 4;
-    this.pipeGap = 120;
+    this.W = 300; this.H = 480;
+    this.gravity = 0.45; this.flapPower = -10;
+    this.pipeSpeed = 3; this.pipeGap = 130;
     this.isRunning = true;
-
-    // Bird state
-    this.bird = {
-      x: 50,
-      y: 150,
-      width: 30,
-      height: 30,
-      velocityY: 0
-    };
-
-    this.score = 0;
-    this.pipes = [];
-    this.frameCount = 0;
-
+    this.bird = {x:60, y:200, w:28, h:28, vy:0};
+    this.pipes = []; this.score = 0; this.frame = 0;
     this.init();
   }
 
   init() {
-    // Create canvas
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = `display:flex;flex-direction:column;align-items:center;gap:0.5rem;width:100%;`;
+
+    const hint = document.createElement('div');
+    hint.textContent = '👆 Tap / Spacebar to flap';
+    hint.style.cssText = `color:#aaa;font-size:0.85rem;`;
+
     this.canvas = document.createElement('canvas');
-    this.canvas.width = this.canvasWidth;
-    this.canvas.height = this.canvasHeight;
+    this.canvas.width = this.W;
+    this.canvas.height = this.H;
+    this.canvas.style.cssText = `border:2px solid #00d4ff;border-radius:12px;background:#050818;box-shadow:0 0 20px rgba(0,212,255,0.4);display:block;max-width:100%;cursor:pointer;`;
     this.ctx = this.canvas.getContext('2d');
 
-    this.container.appendChild(this.canvas);
+    this.canvas.addEventListener('click', () => this.flap());
+    this.canvas.addEventListener('touchstart', e => { e.preventDefault(); this.flap(); }, {passive:false});
+    document.addEventListener('keydown', e => { if (e.code==='Space') { e.preventDefault(); this.flap(); } });
 
-    // Controls
-    this.canvas.addEventListener('touchstart', () => this.flap());
-    document.addEventListener('keydown', (e) => {
-      if (e.key === ' ') {
-        e.preventDefault();
-        this.flap();
-      }
-    });
-
-    // Start game
+    wrapper.appendChild(hint);
+    wrapper.appendChild(this.canvas);
+    this.container.appendChild(wrapper);
     this.gameLoop();
   }
 
   flap() {
     if (!this.isRunning) return;
-    this.bird.velocityY = this.flapPower;
-    audioManager.click();
-  }
-
-  generatePipe() {
-    const minHeight = 50;
-    const maxHeight = this.canvasHeight - this.pipeGap - 50;
-    const gapStart = minHeight + Math.random() * (maxHeight - minHeight);
-
-    return {
-      x: this.canvasWidth,
-      gapStart: gapStart,
-      gapEnd: gapStart + this.pipeGap,
-      scored: false
-    };
+    this.bird.vy = this.flapPower;
+    if (typeof audioManager !== 'undefined') audioManager.click();
   }
 
   gameLoop() {
     if (!this.isRunning) return;
-
     this.update();
     this.draw();
-
     requestAnimationFrame(() => this.gameLoop());
   }
 
   update() {
-    // Apply gravity
-    this.bird.velocityY += this.gravity;
-    this.bird.y += this.bird.velocityY;
+    this.bird.vy += this.gravity;
+    this.bird.y += this.bird.vy;
+    if (this.bird.y + this.bird.h > this.H || this.bird.y < 0) return this.gameOver();
 
-    // Check ground and ceiling collision
-    if (this.bird.y + this.bird.height > this.canvasHeight ||
-        this.bird.y < 0) {
-      this.gameOver();
-      return;
+    this.frame++;
+    if (this.frame % 100 === 0) {
+      const gapY = 80 + Math.random() * (this.H - this.pipeGap - 100);
+      this.pipes.push({x: this.W, gapY, scored: false});
     }
 
-    // Generate pipes
-    this.frameCount++;
-    if (this.frameCount % 90 === 0) {
-      this.pipes.push(this.generatePipe());
-    }
-
-    // Update pipes
-    for (let i = this.pipes.length - 1; i >= 0; i--) {
+    for (let i = this.pipes.length-1; i >= 0; i--) {
       this.pipes[i].x -= this.pipeSpeed;
+      if (this.pipes[i].x + 50 < 0) { this.pipes.splice(i,1); continue; }
 
-      // Remove off-screen pipes
-      if (this.pipes[i].x + 50 < 0) {
-        this.pipes.splice(i, 1);
-        continue;
+      const p = this.pipes[i];
+      const bx = this.bird.x, by = this.bird.y, bw = this.bird.w, bh = this.bird.h;
+      if (bx+bw > p.x+4 && bx < p.x+46) {
+        if (by < p.gapY || by+bh > p.gapY+this.pipeGap) return this.gameOver();
       }
-
-      // Check collision
-      if (this.checkCollision(this.pipes[i])) {
-        this.gameOver();
-        return;
-      }
-
-      // Check score
-      if (!this.pipes[i].scored && this.pipes[i].x + 50 < this.bird.x) {
-        this.pipes[i].scored = true;
-        this.score++;
+      if (!p.scored && p.x+50 < this.bird.x) {
+        p.scored = true; this.score++;
         this.controller.updateScore(this.score);
-        audioManager.pickup();
+        if (typeof audioManager !== 'undefined') audioManager.pickup();
       }
     }
-  }
-
-  checkCollision(pipe) {
-    const birdLeft = this.bird.x;
-    const birdRight = this.bird.x + this.bird.width;
-    const birdTop = this.bird.y;
-    const birdBottom = this.bird.y + this.bird.height;
-
-    const pipeLeft = pipe.x;
-    const pipeRight = pipe.x + 50;
-
-    if (birdRight > pipeLeft && birdLeft < pipeRight) {
-      if (birdTop < pipe.gapStart || birdBottom > pipe.gapEnd) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   draw() {
-    // Clear background
-    this.ctx.fillStyle = 'rgba(10, 14, 39, 0.8)';
-    this.ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+    const ctx = this.ctx;
+    ctx.fillStyle = '#050818';
+    ctx.fillRect(0,0,this.W,this.H);
 
-    // Draw bird
-    this.ctx.fillStyle = '#ffaa00';
-    this.ctx.fillRect(this.bird.x, this.bird.y, this.bird.width, this.bird.height);
-    this.ctx.fillStyle = '#fff';
-    this.ctx.fillRect(this.bird.x + 8, this.bird.y + 8, 6, 6);
+    // Stars
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    for (let i=0;i<30;i++) {
+      const sx = (i*97+this.frame*0.1) % this.W;
+      const sy = (i*53) % this.H;
+      ctx.fillRect(sx,sy,1,1);
+    }
 
-    // Draw pipes
-    this.pipes.forEach(pipe => {
-      // Upper pipe
-      this.ctx.fillStyle = '#00d4ff';
-      this.ctx.fillRect(pipe.x, 0, 50, pipe.gapStart);
-
-      // Lower pipe
-      this.ctx.fillRect(pipe.x, pipe.gapEnd, 50, this.canvasHeight - pipe.gapEnd);
-
-      // Add glow
-      this.ctx.strokeStyle = '#00ff88';
-      this.ctx.lineWidth = 2;
-      this.ctx.strokeRect(pipe.x, 0, 50, pipe.gapStart);
-      this.ctx.strokeRect(pipe.x, pipe.gapEnd, 50, this.canvasHeight - pipe.gapEnd);
+    // Pipes
+    this.pipes.forEach(p => {
+      const grad = ctx.createLinearGradient(p.x,0,p.x+50,0);
+      grad.addColorStop(0,'#00d4ff'); grad.addColorStop(1,'#0066aa');
+      ctx.fillStyle = grad;
+      ctx.fillRect(p.x, 0, 50, p.gapY);
+      ctx.fillRect(p.x, p.gapY+this.pipeGap, 50, this.H);
+      ctx.fillStyle = '#00ff88';
+      ctx.fillRect(p.x-4, p.gapY-10, 58, 10);
+      ctx.fillRect(p.x-4, p.gapY+this.pipeGap, 58, 10);
     });
+
+    // Bird
+    ctx.fillStyle = '#ffaa00';
+    ctx.shadowColor = '#ffaa00'; ctx.shadowBlur = 12;
+    ctx.fillRect(this.bird.x, this.bird.y, this.bird.w, this.bird.h);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'white';
+    ctx.fillRect(this.bird.x+8, this.bird.y+7, 6, 6);
+    ctx.fillStyle = '#333';
+    ctx.fillRect(this.bird.x+11, this.bird.y+9, 3, 3);
   }
 
   gameOver() {
     this.isRunning = false;
-    audioManager.lose();
-    Effects.createExplosion(this.bird.x, this.bird.y, '💥');
-    setTimeout(() => {
-      alert(`Game Over!\nScore: ${this.score}`);
-      this.controller.backToMenu();
-    }, 300);
+    if (typeof audioManager !== 'undefined') audioManager.lose();
+    setTimeout(() => this.controller.showGameOver(this.score, `Passed ${this.score} pipe${this.score !== 1 ? 's' : ''}!`), 400);
   }
 
-  stop() {
-    this.isRunning = false;
-  }
+  stop() { this.isRunning = false; }
 }

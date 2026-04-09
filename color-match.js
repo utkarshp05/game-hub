@@ -2,194 +2,101 @@ class ColorMatchGame {
   constructor(container, controller) {
     this.container = container;
     this.controller = controller;
-
-    this.score = 0;
-    this.timeLeft = 30;
-    this.gameRunning = true;
-    this.level = 1;
-    this.speed = 1500; // ms between new colors
-
-    this.colors = ['#ff006e', '#00d4ff', '#00ff88', '#ffaa00', '#ff4444'];
-    this.currentColor = '';
-    this.targetColor = '';
-
+    this.score = 0; this.timeLeft = 30; this.running = true;
+    this.colors = ['#ff006e','#00d4ff','#00ff88','#ffaa00','#ff4444'];
+    this.names  = ['Pink','Cyan','Green','Orange','Red'];
+    this.currentIdx = 0; this.targetIdx = 0;
     this.init();
   }
 
   init() {
-    // Create UI
-    const gameUI = document.createElement('div');
-    gameUI.style.cssText = `
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2rem;
-      width: 100%;
-      max-width: 300px;
-    `;
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = `display:flex;flex-direction:column;align-items:center;gap:1.2rem;width:100%;max-width:300px;`;
 
-    // Timer
-    this.timerDisplay = document.createElement('div');
-    this.timerDisplay.style.cssText = `
-      font-size: 2rem;
-      font-weight: 700;
-      color: #00ff88;
-    `;
+    this.timerEl = document.createElement('div');
+    this.timerEl.style.cssText = `font-size:2rem;font-weight:700;color:#00ff88;`;
 
-    // Color display box
+    const label = document.createElement('div');
+    label.textContent = 'Tap when the BIG color matches the SMALL target:';
+    label.style.cssText = `font-size:0.85rem;color:#aaa;text-align:center;`;
+
     this.colorBox = document.createElement('div');
-    this.colorBox.style.cssText = `
-      width: 200px;
-      height: 200px;
-      border-radius: 16px;
-      border: 3px solid #00d4ff;
-      box-shadow: 0 0 30px currentColor;
-      transition: background-color 0.3s ease;
-    `;
+    this.colorBox.style.cssText = `width:180px;height:180px;border-radius:16px;border:3px solid #00d4ff;transition:background 0.2s ease;box-shadow:0 0 20px rgba(0,212,255,0.4);`;
 
-    // Instructions
-    const instruction = document.createElement('div');
-    instruction.textContent = 'Tap when color matches:';
-    instruction.style.cssText = `
-      font-size: 0.9rem;
-      color: #aaa;
-      text-align: center;
-    `;
+    const targetRow = document.createElement('div');
+    targetRow.style.cssText = `display:flex;align-items:center;gap:0.8rem;`;
 
-    // Target color display
-    this.targetDisplay = document.createElement('div');
-    this.targetDisplay.style.cssText = `
-      display: flex;
-      gap: 0.5rem;
-      justify-content: center;
-      align-items: center;
-    `;
+    const targetLabel = document.createElement('div');
+    targetLabel.textContent = 'Match →';
+    targetLabel.style.cssText = `color:#aaa;font-size:0.85rem;`;
 
-    const targetBox = document.createElement('div');
-    targetBox.style.cssText = `
-      width: 60px;
-      height: 60px;
-      border-radius: 12px;
-      border: 2px solid #00ff88;
-      box-shadow: 0 0 20px #00ff88;
-    `;
-    this.targetColorBox = targetBox;
+    this.targetBox = document.createElement('div');
+    this.targetBox.style.cssText = `width:60px;height:60px;border-radius:10px;border:2px solid white;box-shadow:0 0 15px currentColor;`;
 
-    this.targetDisplay.appendChild(targetBox);
+    targetRow.appendChild(targetLabel);
+    targetRow.appendChild(this.targetBox);
 
-    // Tap button
-    this.tapButton = document.createElement('button');
-    this.tapButton.textContent = '👇 TAP!';
-    this.tapButton.style.cssText = `
-      background: linear-gradient(135deg, #00ff88, #00d4ff);
-      border: none;
-      color: #000;
-      padding: 1rem 2rem;
-      border-radius: 12px;
-      font-weight: 700;
-      font-size: 1.1rem;
-      cursor: pointer;
-      transition: all 0.1s ease;
-      box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
-      -webkit-tap-highlight-color: transparent;
-    `;
-    this.tapButton.addEventListener('click', () => this.checkMatch());
-    this.tapButton.addEventListener('touchstart', () => {
-      this.tapButton.style.transform = 'scale(0.95)';
-    });
-    this.tapButton.addEventListener('touchend', () => {
-      this.tapButton.style.transform = 'scale(1)';
-    });
+    this.tapBtn = document.createElement('button');
+    this.tapBtn.textContent = '✅ TAP!';
+    this.tapBtn.style.cssText = `background:linear-gradient(135deg,#00ff88,#00d4ff);border:none;color:#000;padding:1rem 2.5rem;border-radius:12px;font-weight:800;font-size:1.2rem;cursor:pointer;box-shadow:0 0 20px rgba(0,255,136,0.5);width:100%;transition:transform 0.1s;`;
+    this.tapBtn.addEventListener('click', () => this.checkMatch());
+    this.tapBtn.addEventListener('touchstart', () => { this.tapBtn.style.transform='scale(0.95)'; });
+    this.tapBtn.addEventListener('touchend', () => { this.tapBtn.style.transform='scale(1)'; this.checkMatch(); });
 
-    // Assemble
-    gameUI.appendChild(this.timerDisplay);
-    gameUI.appendChild(this.colorBox);
-    gameUI.appendChild(instruction);
-    gameUI.appendChild(this.targetDisplay);
-    gameUI.appendChild(this.tapButton);
+    wrapper.append(this.timerEl, label, this.colorBox, targetRow, this.tapBtn);
+    this.container.appendChild(wrapper);
 
-    this.container.appendChild(gameUI);
-
-    // Start game
-    this.nextRound();
+    this.nextTarget();
+    this.cycleColor();
     this.startTimer();
-    this.changeColorCycle();
   }
 
-  nextRound() {
-    this.targetColor = this.colors[Math.floor(Math.random() * this.colors.length)];
-    this.targetColorBox.style.backgroundColor = this.targetColor;
-    this.targetColorBox.style.borderColor = this.targetColor;
-    this.targetColorBox.style.boxShadow = `0 0 20px ${this.targetColor}`;
+  nextTarget() {
+    this.targetIdx = Math.floor(Math.random() * this.colors.length);
+    this.targetBox.style.backgroundColor = this.colors[this.targetIdx];
+    this.targetBox.style.boxShadow = `0 0 15px ${this.colors[this.targetIdx]}`;
   }
 
-  changeColorCycle() {
-    if (!this.gameRunning) return;
-
-    this.currentColor = this.colors[Math.floor(Math.random() * this.colors.length)];
-    this.colorBox.style.backgroundColor = this.currentColor;
-
-    setTimeout(() => this.changeColorCycle(), this.speed);
+  cycleColor() {
+    if (!this.running) return;
+    this.currentIdx = Math.floor(Math.random() * this.colors.length);
+    this.colorBox.style.backgroundColor = this.colors[this.currentIdx];
+    this.colorBox.style.boxShadow = `0 0 25px ${this.colors[this.currentIdx]}`;
+    const delay = Math.max(600, 1500 - this.score * 30);
+    setTimeout(() => this.cycleColor(), delay);
   }
 
   checkMatch() {
-    if (!this.gameRunning) return;
-
-    if (this.currentColor === this.targetColor) {
+    if (!this.running) return;
+    if (this.currentIdx === this.targetIdx) {
       this.score++;
-      audioManager.win();
-      Effects.createConfetti(
-        window.innerWidth / 2,
-        window.innerHeight / 2
-      );
-      this.nextRound();
       this.controller.updateScore(this.score);
+      if (typeof audioManager !== 'undefined') audioManager.win();
+      if (typeof Effects !== 'undefined') Effects.createConfetti(window.innerWidth/2, window.innerHeight/2);
+      this.tapBtn.style.background = 'linear-gradient(135deg,#00ff88,#00d4ff)';
+      this.nextTarget();
     } else {
-      audioManager.lose();
-      Effects.createExplosion(window.innerWidth / 2, window.innerHeight / 2, '❌');
+      if (typeof audioManager !== 'undefined') audioManager.lose();
+      this.tapBtn.style.background = 'linear-gradient(135deg,#ff4444,#ff006e)';
+      setTimeout(() => { this.tapBtn.style.background = 'linear-gradient(135deg,#00ff88,#00d4ff)'; }, 300);
     }
   }
 
   startTimer() {
-    const interval = setInterval(() => {
-      if (!this.gameRunning) {
-        clearInterval(interval);
-        return;
-      }
-
+    const t = setInterval(() => {
+      if (!this.running) { clearInterval(t); return; }
       this.timeLeft--;
-      this.updateTimer();
-
-      if (this.timeLeft <= 0) {
-        clearInterval(interval);
-        this.endGame();
-      }
+      this.timerEl.textContent = `⏱ ${this.timeLeft}s`;
+      this.timerEl.style.color = this.timeLeft > 10 ? '#00ff88' : this.timeLeft > 5 ? '#ffaa00' : '#ff4444';
+      if (this.timeLeft <= 0) { clearInterval(t); this.endGame(); }
     }, 1000);
-  }
-
-  updateTimer() {
-    this.timerDisplay.textContent = `Time: ${this.timeLeft}s`;
-
-    // Change color based on time
-    if (this.timeLeft > 10) {
-      this.timerDisplay.style.color = '#00ff88';
-    } else if (this.timeLeft > 5) {
-      this.timerDisplay.style.color = '#ffaa00';
-    } else {
-      this.timerDisplay.style.color = '#ff4444';
-    }
+    this.timerEl.textContent = `⏱ ${this.timeLeft}s`;
   }
 
   endGame() {
-    this.gameRunning = false;
-    audioManager.lose();
-    setTimeout(() => {
-      alert(`Game Over!\nScore: ${this.score}`);
-      this.controller.backToMenu();
-    }, 300);
+    this.running = false;
+    setTimeout(() => this.controller.showGameOver(this.score, `${this.score} correct match${this.score !== 1 ? 'es' : ''} in 30s!`), 400);
   }
 
-  stop() {
-    this.gameRunning = false;
-  }
+  stop() { this.running = false; }
 }
