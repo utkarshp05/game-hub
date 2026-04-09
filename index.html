@@ -59,7 +59,63 @@
         <div class="game-header">
             <button id="backBtn" class="back-btn">← Back</button>
             <div class="game-title" id="gameTitle">Game</div>
-            <div class="score-display" id="scoreDisplay">0</div>
+<!DOCTYPE html>
+            <html lang="en">
+                <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+                        <meta name="apple-mobile-web-app-capable" content="yes">
+                        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+                        <meta name="apple-mobile-web-app-title" content="Game Hub">
+                        <meta name="theme-color" content="#0a0e27">
+                        <link rel="manifest" href="manifest.json">
+                        <title>Game Hub - Offline Games</title>
+                    <link rel="stylesheet" href="styles.css">
+                </head>
+            <body>
+                <button class="sound-toggle" id="soundToggle">🔊</button>button>
+                <div id="mainMenu" class="screen active">
+                        <div class="menu-container">
+                                    <h1 class="title">Game Hub</h1>h1>
+                                    <button id="statsBtn" class="stats-btn">📊</button>button>
+                                    <div class="games-grid">
+                                                    <div class="game-card" data-game="memory"><div class="game-icon">🧠</div><h2>Memory Flip</h2><p class="best-score" id="score-memory">Best: 0</p>p></div>
+                                                    <div class="game-card" data-game="snake"><div class="game-icon">🐍</div><h2>Snake</h2><p class="best-score" id="score-snake">Best: 0</p>p></div>
+                                                    <div class="game-card" data-game="puzzle"><div class="game-icon">🔢</div><h2>Puzzle 2048</h2><p class="best-score" id="score-puzzle">Best: 0</p>p></div>
+                                                    <div class="game-card" data-game="flappy"><div class="game-icon">🐦</div><h2>Flappy Jump</h2><p class="best-score" id="score-flappy">Best: 0</p>p></div>
+                                                    <div class="game-card" data-game="clicker"><div class="game-icon">👆</div><h2>Tap Tycoon</h2><p class="best-score" id="score-clicker">Best: 0</p>p></div>
+                                                    <div class="game-card" data-game="color"><div class="game-icon">🎨</div><h2>Color Rush</h2><p class="best-score" id="score-color">Best: 0</p>p></div>
+                                    </div>
+                        </div>
+                </div>
+                <div id="statsScreen" class="screen">
+                        <div class="game-header">
+                                    <button id="statsBackBtn" class="back-btn">Back</button>button>
+                                    <div class="game-title">Your Stats</div>
+                                    <div style="width:60px"></div>
+                        </div>
+                        <div id="statsContainer" class="stats-container"></div>
+                </div>
+                <div id="gameScreen" class="screen">
+                        <div class="game-header">
+                                    <button id="backBtn" class="back-btn">Back</button>button>
+                                    <div class="game-title" id="gameTitle">Game</div>
+                                    <div class="score-display" id="scoreDisplay">0</div>
+                        </div>
+                        <div id="gameContainer" class="game-container"></div>
+                </div>
+                <script src="effects.js"></script>
+                <script src="audio.js"></script>
+                <script src="main.js"></script>
+                <script src="memory-flip.js"></script>
+                <script src="snake.js"></script>
+                <script src="puzzle-2048.js"></script>
+                <script src="flappy.js"></script>
+                <script src="clicker.js"></script>
+                <script src="color-match.js"></script>
+            </body>
+            </html></h2></h2></title>
+                </head><div class="score-display" id="scoreDisplay">0</div>
         </div>
         <div id="gameContainer" class="game-container"></div>
     </div>
