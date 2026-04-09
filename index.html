@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Game Hub">
+    <meta name="theme-color" content="#1a1a2e">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%231a1a2e' width='192' height='192'/><text x='50%' y='50%' font-size='100' fill='%2300d4ff' text-anchor='middle' dominant-baseline='central' font-weight='bold'>G</text></svg>">
+    <title>Game Hub - Offline Games</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Sound Toggle -->
+    <button class="sound-toggle" id="soundToggle" title="Toggle Sound">🔊</button>
+    <!-- Game Selector Screen -->
+    <div id="mainMenu" class="screen active">
+        <div class="menu-container">
+            <h1 class="title">Game Hub</h1>
+            <div class="games-grid">
+                <div class="game-card" data-game="memory">
+                    <div class="game-icon">🧠</div>
+                    <h2>Memory Flip</h2>
+                    <p class="best-score" id="score-memory">Best: 0</p>
+                </div>
+                <div class="game-card" data-game="snake">
+                    <div class="game-icon">🐍</div>
+                    <h2>Snake</h2>
+                    <p class="best-score" id="score-snake">Best: 0</p>
+                </div>
+                <div class="game-card" data-game="puzzle">
+                    <div class="game-icon">🔢</div>
+                    <h2>Puzzle 2048</h2>
+                    <p class="best-score" id="score-puzzle">Best: 0</p>
+                </div>
+                <div class="game-card" data-game="flappy">
+                    <div class="game-icon">🐦</div>
+                    <h2>Flappy Jump</h2>
+                    <p class="best-score" id="score-flappy">Best: 0</p>
+                </div>
+                <div class="game-card" data-game="clicker">
+                    <div class="game-icon">👆</div>
+                    <h2>Tap Tycoon</h2>
+                    <p class="best-score" id="score-clicker">Best: 0</p>
+                </div>
+                <div class="game-card" data-game="color">
+                    <div class="game-icon">🎨</div>
+                    <h2>Color Rush</h2>
+                    <p class="best-score" id="score-color">Best: 0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="screen">
+        <div class="game-header">
+            <button id="backBtn" class="back-btn">← Back</button>
+            <div class="game-title" id="gameTitle">Game</div>
+            <div class="score-display" id="scoreDisplay">0</div>
+        </div>
+        <div id="gameContainer" class="game-container"></div>
+    </div>
+
+    <script src="utils/effects.js"></script>
+    <script src="utils/audio.js"></script>
+    <script src="main.js"></script>
+    <script src="games/memory-flip.js"></script>
+    <script src="games/snake.js"></script>
+    <script src="games/puzzle-2048.js"></script>
+    <script src="games/flappy.js"></script>
+    <script src="games/clicker.js"></script>
+    <script src="games/color-match.js"></script>
+</body>
+</html>
